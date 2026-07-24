@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
-import Login from "./login"
+import {
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
+
+import Navbar from "./components/Navbar/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import Login from "./pages/Login/Login";
+import Register from "./pages/Register/Register";
 
 function App() {
   const [message, setMessage] = useState("");
@@ -14,7 +24,6 @@ function App() {
         }
 
         const data = await response.json();
-
         setMessage(data.message);
       } catch (error) {
         console.error(error);
@@ -26,13 +35,33 @@ function App() {
   }, []);
 
   return (
-    <main>
-      <h1>MataPool</h1>
+    <>
+      <Navbar />
 
-      <p>{message}</p>
+      <Routes>
+        <Route
+          path="/"
+          element={<Navigate to="/register" replace />}
+        />
 
-      <Login/>
-    </main>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="*"
+          element={<Navigate to="/register" replace />}
+        />
+      </Routes>
+    </>
   );
 }
 
