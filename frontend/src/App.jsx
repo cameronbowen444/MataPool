@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Login from "./login"
 
 function App() {
   const [message, setMessage] = useState("");
@@ -29,6 +30,8 @@ function App() {
       <h1>MataPool</h1>
 
       <p>{message}</p>
+
+      <Login/>
     </main>
   );
 }
