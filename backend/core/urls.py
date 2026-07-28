@@ -1,6 +1,26 @@
 from django.urls import path
+
 from . import views
 
 urlpatterns = [
     path("", views.home, name="home"),
+
+    # Auth routes
+    path("auth/register/", views.register, name="register"),
+    path("auth/login/", views.login, name="login"),
+    path("auth/logout/", views.logout, name="logout"),
+    path("auth/me/", views.me, name="me"),
+
+    # Carpools
+    path("carpools/", views.carpool_list, name="carpool-list"),
+    path("carpools/create/", views.carpool_create, name="carpool-create"), 
+    path("carpools/<int:id>/", views.carpool_detail, name="carpool-detail"),
+    path("carpools/<int:id>/join/", views.carpool_join, name="carpool-join"),
+
+    #Matches 
+    path("matches/", views.get_matches, name="get-matches"),
+
+    # Events
+# (Uncomment when events view is built, otherwise Django will crash)    path("events/", views.event_list, name="event-list"),
 ]
+

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     # Third-party apps (DON'T DELETE)
     "rest_framework",
+    "rest_framework.authtoken",
     "corsheaders",
 
     # Our apps (DONT DELETE)
@@ -126,6 +127,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+# Tell Django to use our User model instead of the built-in one.
+AUTH_USER_MODEL = "core.User"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
+}
 
 
 #ADD ANOTHER IF NEEDED
