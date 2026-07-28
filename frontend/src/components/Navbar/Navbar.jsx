@@ -5,6 +5,8 @@ import { FaCarSide, FaBars, FaXmark } from "react-icons/fa6";
 
 import { useAuth } from "../../context/AuthContext";
 import styles from "./Navbar.module.css";
+import redLogo from '../../assets/REDmatalogo.png';
+import whiteLogo from '../../assets/WHITEmatalogo.png';
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,13 +35,19 @@ function Navbar() {
           className={styles.logo}
           onClick={closeMenu}
         >
-          <motion.span
+          <motion.img
+            src={whiteLogo}
+            alt="MataPool Logo"
             className={styles.logoIcon}
+            style={{ 
+              height: "28px", 
+              width: "auto", 
+              objectFit: "contain",
+              padding: "2px" 
+            }}
             whileHover={{ rotate: -7, scale: 1.06 }}
             transition={{ type: "spring", stiffness: 280 }}
-          >
-            <FaCarSide aria-hidden="true" />
-          </motion.span>
+          />
 
           <span className={styles.logoText}>MataPool</span>
         </NavLink>

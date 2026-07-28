@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import redLogo from "../../assets/REDmatalogo.png";
 import {
   FaCarSide,
   FaCheck,
@@ -226,7 +227,7 @@ function Register() {
                 stiffness: 300,
               }}
             >
-              <FaCarSide aria-hidden="true" />
+              <img src={redLogo} alt="MataPool Logo" style={{ height: "28px", width: "auto", objectFit: "contain" }} />
             </motion.div>
 
             <span>MataPool</span>

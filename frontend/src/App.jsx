@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Navigate,
   Route,
@@ -12,15 +11,18 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 
-const CLIENT_ID = "658977310896-knrl3gka66fldh83dao2rhgbblmd4un9.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID =
+  "658977310896-knrl3gka66fldh83dao2rhgbblmd4un9.apps.googleusercontent.com";
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId={CLIENT_ID}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Navbar />
+
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
         <Route
           path="/dashboard"
           element={
@@ -29,6 +31,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </GoogleOAuthProvider>
