@@ -8,6 +8,7 @@ urlpatterns = [
     # Auth routes
     path("auth/register/", views.register, name="register"),
     path("auth/login/", views.login, name="login"),
+    path("auth/google/", views.GoogleAuthView.as_view(), name="google-auth"),
     path("auth/logout/", views.logout, name="logout"),
     path("auth/me/", views.me, name="me"),
 

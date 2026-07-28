@@ -14,6 +14,7 @@ from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
 
 
 User = get_user_model()
+
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 
 
