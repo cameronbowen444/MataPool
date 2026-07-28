@@ -10,4 +10,17 @@ urlpatterns = [
     path("auth/login/", views.login, name="login"),
     path("auth/logout/", views.logout, name="logout"),
     path("auth/me/", views.me, name="me"),
+
+    # Carpools
+    path("carpools/", views.carpool_list, name="carpool-list"),
+    path("carpools/create/", views.carpool_create, name="carpool-create"), 
+    path("carpools/<int:id>/", views.carpools_detail, name="carpool-detail"),
+    path("carpools/<int:id>/join/", views.carpool_join, name="carpool-join"),
+
+    #Matches 
+    path("matches/", views.get_matches, name="get-matches"),
+
+    # Events
+    path("events/", views.event_list, name="event-list"),
 ]
+

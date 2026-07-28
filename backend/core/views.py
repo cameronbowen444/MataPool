@@ -85,3 +85,34 @@ def me(request):
     serializer.save()
 
     return Response(serializer.data)
+
+# TO-DO: implement functions 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def carpool_list(request):
+    """GET /carpools/ - retrieve all available carpools."""
+    pass 
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def carpool_create(request):
+    """POST /carpools/create/ - create a new carpools."""
+    pass
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def carpool_detail(request, id):
+    """GET /carpools/<id>/ - retrieve a specific carpools by ID."""
+    pass
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def carpool_join(request, id): 
+    """ POST/carpools/<id>/join/ - join an existing carpool."""
+    pass
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_matches(request): 
+    """GET /matches/ - retrieve carpool matches for the logged-in user"""
+    pass
