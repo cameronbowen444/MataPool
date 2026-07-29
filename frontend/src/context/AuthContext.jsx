@@ -7,6 +7,9 @@ import {
   useState,
 } from "react";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -27,12 +30,40 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem(
-      "matapoolUser",
-      JSON.stringify(userData)
-    );
+  // Authenticates against the backend. Pass { email, password } for a
+  // standard login, or { googleToken } for Google sign-in. Throws on
+  // failure so the calling page can show an error.
+  const login = async (credentials) => {
+    const endpoint = credentials.googleToken
+      ? "/auth/google/"
+      : "/auth/login/";
+
+    const body = credentials.googleToken
+      ? { token: credentials.googleToken }
+      : { email: credentials.email, password: credentials.password };
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || data.detail || "Login failed. Please try again."
+      );
+    }
+
+    setUser(data.user);
+    localStorage.setItem("matapoolUser", JSON.stringify(data.user));
+
+    if (data.token) {
+      localStorage.setItem("accessToken", data.token);
+    }
+
+    return data;
   };
 
   const logout = () => {

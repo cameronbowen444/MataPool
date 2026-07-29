@@ -12,7 +12,8 @@ import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 
 const GOOGLE_CLIENT_ID =
-  "658977310896-knrl3gka66fldh83dao2rhgbblmd4un9.apps.googleusercontent.com";
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  "7821136417-g3lei84v4p00plv2j33o3bd6rvrjehk5.apps.googleusercontent.com";
 
 function App() {
   return (
