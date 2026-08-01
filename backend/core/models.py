@@ -20,6 +20,15 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True)
     bio = models.TextField(blank=True, default="")
 
+    # Profile picture stored as a file under MEDIA_ROOT/profile_pictures/.
+    profile_picture = models.ImageField(
+        upload_to="profile_pictures/",
+        blank=True,
+        null=True,
+    )
+    # Alt text so screen reader users get a description of the image.
+    profile_picture_alt = models.CharField(max_length=255, blank=True, default="")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

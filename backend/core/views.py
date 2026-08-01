@@ -172,12 +172,15 @@ def logout(request):
 def me(request):
     """GET or PATCH /auth/me/ - retrieve or update the current user."""
     if request.method == "GET":
-        return Response(UserSerializer(request.user).data)
+        return Response(
+            UserSerializer(request.user, context={"request": request}).data
+        )
 
     serializer = UserSerializer(
         request.user,
         data=request.data,
         partial=True,
+        context={"request": request},
     )
     serializer.is_valid(raise_exception=True)
     serializer.save()

@@ -20,6 +20,8 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "phone",
             "bio",
+            "profile_picture",
+            "profile_picture_alt",
         ]
 
 

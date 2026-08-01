@@ -8,6 +8,9 @@ venv/
 db.sqlite3
 staticfiles/
 
+# User-uploaded files (profile pictures, etc.) - local dev only
+media/
+
 # React / Node
 node_modules/
 dist/

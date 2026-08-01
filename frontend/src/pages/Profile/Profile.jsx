@@ -8,6 +8,10 @@ import styles from "./Profile.module.css";
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
+// The prompt shown under the alt-text field, per the accessibility spec.
+const ALT_TEXT_PROMPT =
+  "Add a description of the image for blind users of the service.";
+
 // DRF TokenAuthentication expects "Authorization: Token <key>".
 function authHeaders() {
   const token = localStorage.getItem("accessToken");
@@ -19,6 +23,7 @@ const EMPTY_FORM = {
   last_name: "",
   phone: "",
   bio: "",
+  profile_picture_alt: "",
 };
 
 function Profile() {
@@ -26,6 +31,13 @@ function Profile() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [email, setEmail] = useState("");
+
+  // The picture already saved on the server (absolute URL), and a newly
+  // chosen file plus its local preview URL before saving.
+  const [currentPictureUrl, setCurrentPictureUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -54,11 +66,13 @@ function Profile() {
         if (cancelled) return;
 
         setEmail(data.email || "");
+        setCurrentPictureUrl(data.profile_picture || "");
         setForm({
           first_name: data.first_name || "",
           last_name: data.last_name || "",
           phone: data.phone || "",
           bio: data.bio || "",
+          profile_picture_alt: data.profile_picture_alt || "",
         });
       } catch (error) {
         if (!cancelled) {
@@ -78,9 +92,29 @@ function Profile() {
     };
   }, []);
 
+  // Release the object URL when the preview changes or on unmount.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((previous) => ({ ...previous, [name]: value }));
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (event) => {
@@ -89,19 +123,31 @@ function Profile() {
     setStatus(null);
 
     try {
+      // Multipart so the image file can ride along with the text fields.
+      const body = new FormData();
+      body.append("first_name", form.first_name);
+      body.append("last_name", form.last_name);
+      body.append("phone", form.phone);
+      body.append("bio", form.bio);
+      body.append("profile_picture_alt", form.profile_picture_alt);
+
+      // Only send the image when the user picked a new one, so we don't
+      // overwrite the existing picture with an empty value.
+      if (selectedFile) {
+        body.append("profile_picture", selectedFile);
+      }
+
       const response = await fetch(`${API_URL}/auth/me/`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders(),
-        },
-        body: JSON.stringify(form),
+        // Note: no Content-Type header - the browser sets the multipart
+        // boundary automatically for FormData.
+        headers: authHeaders(),
+        body,
       });
 
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        // DRF returns field errors as { field: [messages] }.
         const firstError =
           data.detail ||
           Object.values(data)?.[0]?.[0] ||
@@ -109,7 +155,14 @@ function Profile() {
         throw new Error(firstError);
       }
 
-      // Keep the cached user (navbar, dashboard greeting) in sync.
+      // Swap in the saved picture URL and clear the pending file/preview.
+      setCurrentPictureUrl(data.profile_picture || "");
+      setSelectedFile(null);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setPreviewUrl("");
+      }
+
       updateUser(data);
       setStatus({ type: "success", message: "Your profile has been saved." });
     } catch (error) {
@@ -118,6 +171,8 @@ function Profile() {
       setSaving(false);
     }
   };
+
+  const displayPictureUrl = previewUrl || currentPictureUrl;
 
   return (
     <main className={styles.page}>
@@ -135,6 +190,56 @@ function Profile() {
           </p>
         ) : (
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
+            <fieldset className={styles.pictureFieldset}>
+              <legend className={styles.legend}>Profile picture</legend>
+
+              <div className={styles.pictureRow}>
+                {displayPictureUrl ? (
+                  <img
+                    src={displayPictureUrl}
+                    alt={form.profile_picture_alt}
+                    className={styles.avatar}
+                  />
+                ) : (
+                  <div className={styles.avatarPlaceholder} aria-hidden="true">
+                    No photo
+                  </div>
+                )}
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="profile_picture">
+                    Upload a photo
+                  </label>
+                  <input
+                    id="profile_picture"
+                    name="profile_picture"
+                    className={styles.fileInput}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="profile_picture_alt">
+                  Image description (alt text)
+                </label>
+                <input
+                  id="profile_picture_alt"
+                  name="profile_picture_alt"
+                  className={styles.input}
+                  type="text"
+                  value={form.profile_picture_alt}
+                  onChange={handleChange}
+                  aria-describedby="alt-help"
+                />
+                <p id="alt-help" className={styles.hint}>
+                  {ALT_TEXT_PROMPT}
+                </p>
+              </div>
+            </fieldset>
+
             <div className={styles.field}>
               <label className={styles.label} htmlFor="email">
                 CSUN email
