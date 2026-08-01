@@ -66,6 +66,13 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  // Replaces the cached user after a profile edit so the UI (navbar,
+  // dashboard greeting, etc.) reflects the latest values immediately.
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem("matapoolUser", JSON.stringify(updatedUser));
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem("matapoolUser");
@@ -78,6 +85,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: Boolean(user),
     login,
+    updateUser,
     logout,
   };
 
