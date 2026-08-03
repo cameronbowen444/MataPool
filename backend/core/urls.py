@@ -22,6 +22,7 @@ urlpatterns = [
     path("matches/", views.get_matches, name="get-matches"),
 
     # Events
-# (Uncomment when events view is built, otherwise Django will crash)    path("events/", views.event_list, name="event-list"),
+    path("events/", views.event_list, name="event-list"),
+    path("events/<int:id>/", views.event_detail, name="event-detail"),
+    path("events/gallery/<int:id>/", views.event_gallery_image_delete, name="event-gallery-delete"),
 ]
-

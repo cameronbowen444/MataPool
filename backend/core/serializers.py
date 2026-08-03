@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import User
+from .models import User, Event, EventGalleryImage
 from .validators import validate_csun_email
 
 
@@ -113,3 +113,35 @@ class LoginSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
+
+class EventGalleryImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventGalleryImage
+        fields = ['id', 'image', 'uploaded_at']
+
+class EventSerializer(serializers.ModelSerializer):
+    """Serializes the Event model and handles validation."""
+    
+    # We serialize the creator using UserSerializer for READ operations,
+    # but when creating (WRITE), the creator is assigned automatically 
+    # in the view based on request.user, so we set it read_only.
+    creator = UserSerializer(read_only=True)
+    gallery_images = EventGalleryImageSerializer(many=True, read_only=True)
+
+
+    class Meta:
+        model = Event
+        fields = [
+            "id",
+            "title",
+            "description",
+            "location",
+            "date",
+            "time",
+            "banner_image",
+            "gallery_images",
+            "creator",
+            "created_at",
+            "updated_at",
+        ]

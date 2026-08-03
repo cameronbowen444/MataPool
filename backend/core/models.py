@@ -26,3 +26,36 @@ class User(AbstractUser):
     def __str__(self):
         # Controls how a user shows up in the Django admin and in the shell.
         return f"{self.first_name} {self.last_name} ({self.email})"
+
+
+# ---------------------------------------------------------------------------
+# Event
+# ---------------------------------------------------------------------------
+class Event(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, default="")
+    location = models.CharField(max_length=255)
+    date = models.DateField()
+    time = models.TimeField()
+    banner_image = models.ImageField(upload_to='events/images/', blank=True, null=True)
+    
+    # The user who created the event. If they delete their account, the event is also deleted.
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="events")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} at {self.location} on {self.date}"
+
+
+# ---------------------------------------------------------------------------
+# EventGalleryImage
+# ---------------------------------------------------------------------------
+class EventGalleryImage(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="gallery_images")
+    image = models.ImageField(upload_to='events/gallery/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Gallery image for {self.event.title}"
