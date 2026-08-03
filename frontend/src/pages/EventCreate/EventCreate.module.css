@@ -1,0 +1,58 @@
+.page {
+  min-height: calc(100vh - 74px);
+  padding: 2.5rem 1.25rem 5rem;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(215, 25, 32, 0.12),
+      transparent 30%
+    ),
+    #080808;
+  color: #ffffff;
+}
+
+.container {
+  width: min(100%, 850px);
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.8rem;
+  color: #a5a5a5;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: #ffffff;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header p {
+  margin: 0 0 0.5rem;
+  color: #ef3038;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 5vw, 4rem);
+  letter-spacing: -0.05em;
+}
+
+.header span {
+  display: block;
+  margin-top: 0.7rem;
+  color: #929292;
+  line-height: 1.6;
+}

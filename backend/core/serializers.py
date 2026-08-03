@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import User
+from .models import Event, EventGalleryImage, User
 from .validators import validate_csun_email
 
 
@@ -28,12 +28,18 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     """Validates registration data and creates a new user."""
 
-    email = serializers.EmailField(validators=[validate_csun_email])
+    email = serializers.EmailField(
+        validators=[validate_csun_email]
+    )
+
     password = serializers.CharField(
         write_only=True,
         min_length=8,
     )
-    password_confirm = serializers.CharField(write_only=True)
+
+    password_confirm = serializers.CharField(
+        write_only=True
+    )
 
     class Meta:
         model = User
@@ -47,9 +53,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate_email(self, value):
         """Normalize the email and prevent duplicate accounts."""
+
         email = value.lower().strip()
 
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(
+            email__iexact=email
+        ).exists():
             raise serializers.ValidationError(
                 "An account with this email already exists."
             )
@@ -58,10 +67,16 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Confirm that both password fields match."""
-        if attrs["password"] != attrs["password_confirm"]:
+
+        if (
+            attrs["password"]
+            != attrs["password_confirm"]
+        ):
             raise serializers.ValidationError(
                 {
-                    "password_confirm": "Passwords do not match.",
+                    "password_confirm": (
+                        "Passwords do not match."
+                    ),
                 }
             )
 
@@ -69,14 +84,19 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create the user and securely hash the password."""
+
         validated_data.pop("password_confirm")
+
         password = validated_data.pop("password")
 
         # AbstractUser still requires a username.
         # MataPool uses the normalized email as the username.
-        validated_data["username"] = validated_data["email"]
+        validated_data["username"] = (
+            validated_data["email"]
+        )
 
         user = User(**validated_data)
+
         user.set_password(password)
         user.save()
 
@@ -87,10 +107,14 @@ class LoginSerializer(serializers.Serializer):
     """Validates an email and password login attempt."""
 
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+
+    password = serializers.CharField(
+        write_only=True
+    )
 
     def validate(self, attrs):
-        """Authenticate the user using their email as the username."""
+        """Authenticate the user using email as the username."""
+
         email = attrs["email"].lower().strip()
         password = attrs["password"]
 
@@ -102,16 +126,72 @@ class LoginSerializer(serializers.Serializer):
         if user is None:
             raise serializers.ValidationError(
                 {
-                    "general": "Incorrect email or password.",
+                    "general": (
+                        "Incorrect email or password."
+                    ),
                 }
             )
 
         if not user.is_active:
             raise serializers.ValidationError(
                 {
-                    "general": "This account has been deactivated.",
+                    "general": (
+                        "This account has been deactivated."
+                    ),
                 }
             )
 
         attrs["user"] = user
+
         return attrs
+
+
+class EventGalleryImageSerializer(
+    serializers.ModelSerializer
+):
+    """Serializes one image in an event gallery."""
+
+    class Meta:
+        model = EventGalleryImage
+        fields = [
+            "id",
+            "image",
+            "uploaded_at",
+        ]
+
+
+class EventSerializer(serializers.ModelSerializer):
+    """Serializes events and their gallery images."""
+
+    creator = UserSerializer(
+        read_only=True
+    )
+
+    gallery_images = EventGalleryImageSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = Event
+        fields = [
+            "id",
+            "title",
+            "description",
+            "location",
+            "date",
+            "time",
+            "banner_image",
+            "gallery_images",
+            "creator",
+            "created_at",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "creator",
+            "gallery_images",
+            "created_at",
+            "updated_at",
+        ]

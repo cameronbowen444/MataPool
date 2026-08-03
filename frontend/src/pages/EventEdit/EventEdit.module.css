@@ -1,0 +1,104 @@
+.page {
+  min-height: calc(100vh - 74px);
+  padding: 2.5rem 1.25rem 5rem;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(215, 25, 32, 0.12),
+      transparent 30%
+    ),
+    #080808;
+  color: #ffffff;
+}
+
+.container {
+  width: min(100%, 850px);
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1.8rem;
+  color: #a5a5a5;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: #ffffff;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header p {
+  margin: 0 0 0.5rem;
+  color: #ef3038;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  letter-spacing: -0.05em;
+}
+
+.header span {
+  display: block;
+  margin-top: 0.7rem;
+  color: #929292;
+  line-height: 1.6;
+}
+
+.statusCard,
+.errorCard {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.8rem;
+  padding: 2rem;
+  border: 1px solid #272727;
+  border-radius: 20px;
+  background: #111111;
+  text-align: center;
+}
+
+.statusCard {
+  color: #999999;
+}
+
+.errorCard {
+  border-color: rgba(215, 25, 32, 0.35);
+}
+
+.errorCard h2 {
+  margin: 0;
+}
+
+.errorCard p {
+  margin: 0;
+  color: #999999;
+}
+
+.spinner {
+  width: 38px;
+  height: 38px;
+  border: 4px solid #292929;
+  border-top-color: #d71920;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

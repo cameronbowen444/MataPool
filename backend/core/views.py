@@ -10,7 +10,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .models import Event, EventGalleryImage
+from .serializers import (
+    EventSerializer,
+    LoginSerializer,
+    RegisterSerializer,
+    UserSerializer,
+)
 
 
 User = get_user_model()
@@ -30,6 +36,164 @@ def home(request):
         "message": "Welcome to the MataPool API!"
     })
 
+
+# ---------------------------------------------------------------------------
+# Event routes
+# ---------------------------------------------------------------------------
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def event_list(request):
+    """
+    GET /events/ - list all events.
+    POST /events/ - create a new event.
+    """
+
+    if request.method == "GET":
+        events = Event.objects.all().order_by("-created_at")
+        serializer = EventSerializer(
+            events,
+            many=True,
+            context={"request": request},
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    serializer = EventSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+
+    serializer.is_valid(raise_exception=True)
+
+    event = serializer.save(
+        creator=request.user,
+    )
+
+    for image in request.FILES.getlist("gallery_images"):
+        EventGalleryImage.objects.create(
+            event=event,
+            image=image,
+        )
+
+    return Response(
+        EventSerializer(
+            event,
+            context={"request": request},
+        ).data,
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def event_detail(request, id):
+    """
+    GET /events/<id>/ - retrieve an event.
+    PUT/PATCH /events/<id>/ - update an event.
+    DELETE /events/<id>/ - delete an event.
+    """
+
+    try:
+        event = Event.objects.get(id=id)
+    except Event.DoesNotExist:
+        return Response(
+            {"error": "Event not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if request.method == "GET":
+        serializer = EventSerializer(
+            event,
+            context={"request": request},
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    if event.creator != request.user:
+        return Response(
+            {
+                "error": (
+                    "You do not have permission to modify this event."
+                )
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if request.method in ["PUT", "PATCH"]:
+        serializer = EventSerializer(
+            event,
+            data=request.data,
+            partial=request.method == "PATCH",
+            context={"request": request},
+        )
+
+        serializer.is_valid(raise_exception=True)
+
+        event = serializer.save()
+
+        for image in request.FILES.getlist("gallery_images"):
+            EventGalleryImage.objects.create(
+                event=event,
+                image=image,
+            )
+
+        return Response(
+            EventSerializer(
+                event,
+                context={"request": request},
+            ).data,
+            status=status.HTTP_200_OK,
+        )
+
+    event.delete()
+
+    return Response(
+        status=status.HTTP_204_NO_CONTENT,
+    )
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def event_gallery_image_delete(request, id):
+    """
+    DELETE /events/gallery/<id>/ - delete a specific gallery image.
+    """
+
+    try:
+        gallery_image = EventGalleryImage.objects.get(id=id)
+    except EventGalleryImage.DoesNotExist:
+        return Response(
+            {"error": "Image not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if gallery_image.event.creator != request.user:
+        return Response(
+            {
+                "error": (
+                    "You do not have permission to delete this image."
+                )
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    gallery_image.delete()
+
+    return Response(
+        status=status.HTTP_204_NO_CONTENT,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Authentication routes
+# ---------------------------------------------------------------------------
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -102,7 +266,11 @@ class GoogleAuthView(APIView):
 
             if "@" not in email:
                 return Response(
-                    {"error": "Google account did not provide a valid email."},
+                    {
+                        "error": (
+                            "Google account did not provide a valid email."
+                        )
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -173,7 +341,10 @@ def me(request):
     """GET or PATCH /auth/me/ - retrieve or update the current user."""
     if request.method == "GET":
         return Response(
-            UserSerializer(request.user, context={"request": request}).data
+            UserSerializer(
+                request.user,
+                context={"request": request},
+            ).data
         )
 
     serializer = UserSerializer(

@@ -7,10 +7,15 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import Navbar from "./components/Navbar/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
 import Profile from "./pages/Profile/Profile";
 import Register from "./pages/Register/Register";
+import EventsList from "./pages/EventsList/EventsList";
+import EventCreate from "./pages/EventCreate/EventCreate";
+import EventDetail from "./pages/EventDetail/EventDetail";
+import EventEdit from "./pages/EventEdit/EventEdit";
 
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
@@ -22,6 +27,11 @@ function App() {
       <Navbar />
 
       <Routes>
+        <Route
+          path="/"
+          element={<Navigate to="/dashboard" replace />}
+        />
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -43,7 +53,46 @@ function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/events"
+          element={
+            <ProtectedRoute>
+              <EventsList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/events/create"
+          element={
+            <ProtectedRoute>
+              <EventCreate />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/events/:id"
+          element={
+            <ProtectedRoute>
+              <EventDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/events/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EventEdit />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="*"
+          element={<Navigate to="/login" replace />}
+        />
       </Routes>
     </GoogleOAuthProvider>
   );
