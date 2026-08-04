@@ -8,10 +8,7 @@ function EventCreate() {
   return (
     <main className={styles.page}>
       <section className={styles.container}>
-        <Link
-          to="/events"
-          className={styles.backLink}
-        >
+        <Link to="/events" className={styles.backLink}>
           <FaArrowLeft aria-hidden="true" />
           Back to Events
         </Link>
@@ -24,12 +21,15 @@ function EventCreate() {
           <h1>Create an Event</h1>
 
           <p className={styles.description}>
-            Only the event title is required. You can
-            add the other information now or later.
+            Share an event with the CSUN community. Only the
+            title is required, and you can add more details
+            later.
           </p>
         </header>
 
-        <EventForm />
+        <section className={styles.formCard}>
+          <EventForm />
+        </section>
       </section>
     </main>
   );

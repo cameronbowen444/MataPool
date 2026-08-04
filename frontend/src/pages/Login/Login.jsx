@@ -1,331 +1,404 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
 
 import { useAuth } from '../../context/AuthContext';
-import redLogo from '../../assets/REDmatalogo.png';
 import whiteLogo from '../../assets/WHITEmatalogo.png';
 
+import styles from './Login.module.css';
+
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      if (login) {
-        await login({ googleToken: credentialResponse.credential });
-      }
-      setError(false);
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Google login failed in context:', err);
-      setError(true);
+  const getBackendError = (error) => {
+    const data = error?.response?.data;
+
+    if (!data) {
+      return error?.message || 'Unable to log in. Please try again.';
     }
+
+    if (typeof data === 'string') {
+      return data;
+    }
+
+    if (data.detail) {
+      return data.detail;
+    }
+
+    if (data.message) {
+      return data.message;
+    }
+
+    if (data.error) {
+      return data.error;
+    }
+
+    if (Array.isArray(data.non_field_errors)) {
+      return data.non_field_errors[0];
+    }
+
+    if (Array.isArray(data.email)) {
+      return data.email[0];
+    }
+
+    if (Array.isArray(data.password)) {
+      return data.password[0];
+    }
+
+    const firstError = Object.values(data)[0];
+
+    if (Array.isArray(firstError)) {
+      return firstError[0];
+    }
+
+    if (typeof firstError === 'string') {
+      return firstError;
+    }
+
+    return 'Unable to log in. Please check your information.';
   };
 
-  const handleGoogleError = () => {
-    console.error('Google Auth Failed');
-    setError(true);
+  const validateForm = () => {
+    const newErrors = {};
+    const normalizedEmail = formData.email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      newErrors.email = 'Your CSUN email is required.';
+    } else if (
+      !normalizedEmail.endsWith('@my.csun.edu') &&
+      !normalizedEmail.endsWith('@csun.edu')
+    ) {
+      newErrors.email =
+        'Please use an official @my.csun.edu or @csun.edu email.';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Your password is required.';
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-    if (!email.endsWith('@my.csun.edu') && !email.endsWith('@csun.edu')) {
-      setError(true);
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: value,
+    }));
+
+    setErrors((previousErrors) => ({
+      ...previousErrors,
+      [name]: '',
+      general: '',
+    }));
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    if (!credentialResponse?.credential) {
+      setErrors({
+        general: 'Google did not return a valid login credential.',
+      });
       return;
     }
 
     try {
-      setError(false);
-      if (login) {
-        await login({ email, password });
-      }
+      setIsSubmitting(true);
+      setErrors({});
+
+      await login({
+        googleToken: credentialResponse.credential,
+      });
+
       navigate('/dashboard');
-    } catch (err) {
-      console.error('Standard login failed:', err);
-      setError(true);
+    } catch (error) {
+      console.error('Google login failed:', error);
+
+      setErrors({
+        general: getBackendError(error),
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrors({
+      general:
+        'Google login was unsuccessful. Please try again or use your CSUN email.',
+    });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setErrors({});
+
+      await login({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      });
+
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Standard login failed:', error);
+
+      const backendData = error?.response?.data;
+      const newErrors = {};
+
+      if (Array.isArray(backendData?.email)) {
+        newErrors.email = backendData.email[0];
+      }
+
+      if (Array.isArray(backendData?.password)) {
+        newErrors.password = backendData.password[0];
+      }
+
+      if (!newErrors.email && !newErrors.password) {
+        newErrors.general = getBackendError(error);
+      }
+
+      setErrors(newErrors);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <>
-      <style>{`
-        .screen-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 100%;
-          min-height: calc(100vh - 80px);
-          padding: 20px;
-          box-sizing: border-box;
-          background-color: #ffffff;
-        }
+    <main className={styles.screen}>
+      <div className={styles.backgroundGlowOne} />
+      <div className={styles.backgroundGlowTwo} />
 
-        .page-wrapper {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          max-width: 400px;
-        }
-
-        .outer-logo-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-bottom: 16px;
-        }
-
-        .outer-logo-image {
-          display: block;
-          max-width: 110px;
-          height: auto;
-          object-fit: contain;
-        }
-
-        h1 {
-          font-family: Helvetica, Arial, sans-serif;
-          font-size: 28px;
-          color: #111;
-          margin-bottom: 24px;
-          text-align: center;
-        }
-
-        .logo-container {
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          margin-bottom: 20px;
-        }
-
-        .logo-image {
-          display: block;
-          max-width: 90px;
-          height: auto;
-          object-fit: contain;
-        }
-
-        .login-container {
-          background: linear-gradient(135deg, #680207, #ff7075);
-          padding: 40px;
-          border-radius: 12px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-          width: 100%;
-          box-sizing: border-box;
-          color: #ffffff;
-        }
-
-        h2 {
-          text-align: center;
-          margin-bottom: 24px;
-          font-family: Helvetica, Arial, sans-serif;
-          font-size: 22px;
-          color: #ffffff;
-        }
-
-        .google-btn-wrapper {
-          display: flex;
-          justify-content: center;
-          width: 100%;
-          margin-bottom: 18px;
-        }
-
-        .divider {
-          display: flex;
-          align-items: center;
-          text-align: center;
-          color: rgba(255, 255, 255, 0.8);
-          font-size: 13px;
-          margin: 18px 0;
-          font-family: Helvetica, Arial, sans-serif;
-        }
-
-        .divider::before,
-        .divider::after {
-          content: '';
-          flex: 1;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .divider::before {
-          margin-right: 12px;
-        }
-
-        .divider::after {
-          margin-left: 12px;
-        }
-
-        .input-group {
-          margin-bottom: 20px;
-          text-align: left;
-        }
-
-        .input-group label {
-          display: block;
-          font-family: Helvetica, Arial, sans-serif;
-          font-size: 14px;
-          font-weight: 600;
-          color: #ffffff;
-          margin-bottom: 6px;
-        }
-
-        input {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid transparent;
-          border-radius: 6px;
-          box-sizing: border-box;
-          font-size: 14px;
-          background-color: #ffffff;
-          color: #111111;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        input:focus {
-          outline: none;
-          border-color: #111111;
-          box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
-        }
-
-        .error-message {
-          color: #ffdddd;
-          background-color: rgba(0, 0, 0, 0.2);
-          padding: 8px 12px;
-          border-radius: 4px;
-          font-size: 13px;
-          margin-top: -10px;
-          margin-bottom: 16px;
-          font-weight: bold;
-          font-family: Helvetica, Arial, sans-serif;
-        }
-
-        input.invalid-field {
-          border-color: #ffcccc;
-          background-color: #fff5f5;
-        }
-
-        .login-btn {
-          width: 100%;
-          padding: 12px;
-          background-color: #111111;
-          color: #ffffff;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 16px;
-          font-weight: 600;
-          transition: background-color 0.2s ease;
-        }
-
-        .login-btn:hover {
-          background-color: #ff0000;
-        }
-
-        .register-text {
-          margin-top: 24px;
-          font-family: Helvetica, Arial, sans-serif;
-          font-size: 14px;
-          color: #555555;
-          text-align: center;
-        }
-
-        .register-text a {
-          color: #C10006;
-          text-decoration: none;
-          font-weight: 600;
-        }
-
-        .register-text a:hover {
-          text-decoration: underline;
-        }
-      `}</style>
-
-      <main className="screen-container">
+      <motion.section
+        className={styles.pageWrapper}
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.45,
+          ease: 'easeOut',
+        }}
+      >
         <motion.div
-          className="page-wrapper"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className={styles.loginCard}
+          initial={{ scale: 0.98 }}
+          animate={{ scale: 1 }}
+          transition={{
+            duration: 0.4,
+            ease: 'easeOut',
+          }}
         >
-
-          <div className="login-container">
-            <div className="logo-container">
+          <div className={styles.cardHeader}>
+            <div className={styles.logoContainer}>
               <img
                 src={whiteLogo}
-                alt="MataPool White Logo"
-                className="logo-image"
+                alt="MataPool"
+                className={styles.logo}
               />
             </div>
 
-            <h2>Log In</h2>
+            <p className={styles.eyebrow}>Welcome back</p>
+            <h1 className={styles.title}>Log in to MataPool</h1>
 
-            <div className="google-btn-wrapper">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                shape="rectangular"
-                theme="outline"
-              />
-            </div>
-
-            <div className="divider">or continue with email</div>
-
-            <form onSubmit={handleSubmit}>
-              <div className="input-group">
-                <label htmlFor="email">CSUN email</label>
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="example.123@my.csun.edu"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={error ? 'invalid-field' : ''}
-                />
-              </div>
-
-              {error && (
-                <div className="error-message">
-                  Please log in using only your official CSUN student email.
-                </div>
-              )}
-
-              <div className="input-group">
-                <label htmlFor="password">Password</label>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                className="login-btn"
-              >
-                Sign In
-              </motion.button>
-            </form>
+            <p className={styles.subtitle}>
+              Connect with the CSUN community using your student account.
+            </p>
           </div>
 
-          <p className="register-text">
-            Don&apos;t have an account?{' '}
-            <Link to="/register">Create an account</Link>
-          </p>
+          <AnimatePresence mode="wait">
+            {errors.general && (
+              <motion.div
+                key={errors.general}
+                className={styles.generalError}
+                role="alert"
+                aria-live="polite"
+                initial={{ opacity: 0, y: -8, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -8, height: 0 }}
+              >
+                <span className={styles.errorIcon}>!</span>
+
+                <div>
+                  <strong>Login unsuccessful</strong>
+                  <p>{errors.general}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className={styles.googleButtonWrapper}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              shape="rectangular"
+              theme="outline"
+              size="large"
+              width="320"
+              text="continue_with"
+            />
+          </div>
+
+          <div className={styles.divider}>
+            <span>or continue with email</span>
+          </div>
+
+          <form
+            className={styles.form}
+            onSubmit={handleSubmit}
+            noValidate
+          >
+            <div className={styles.inputGroup}>
+              <label
+                className={styles.label}
+                htmlFor="email"
+              >
+                CSUN email
+              </label>
+
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="example.123@my.csun.edu"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={
+                  errors.email ? 'email-error' : undefined
+                }
+                className={`${styles.input} ${
+                  errors.email ? styles.invalidInput : ''
+                }`}
+              />
+
+              <AnimatePresence>
+                {errors.email && (
+                  <motion.p
+                    id="email-error"
+                    className={styles.fieldError}
+                    role="alert"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {errors.email}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <div className={styles.labelRow}>
+                <label
+                  className={styles.label}
+                  htmlFor="password"
+                >
+                  Password
+                </label>
+
+                <Link
+                  to="/forgot-password"
+                  className={styles.forgotPassword}
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={
+                  errors.password ? 'password-error' : undefined
+                }
+                className={`${styles.input} ${
+                  errors.password ? styles.invalidInput : ''
+                }`}
+              />
+
+              <AnimatePresence>
+                {errors.password && (
+                  <motion.p
+                    id="password-error"
+                    className={styles.fieldError}
+                    role="alert"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {errors.password}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <motion.button
+              type="submit"
+              className={styles.loginButton}
+              disabled={isSubmitting}
+              whileHover={
+                isSubmitting
+                  ? undefined
+                  : {
+                      y: -2,
+                    }
+              }
+              whileTap={
+                isSubmitting
+                  ? undefined
+                  : {
+                      scale: 0.98,
+                    }
+              }
+            >
+              {isSubmitting ? (
+                <>
+                  <span className={styles.spinner} />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </motion.button>
+          </form>
         </motion.div>
-      </main>
-    </>
+
+        <p className={styles.registerText}>
+          Don&apos;t have an account?{' '}
+          <Link
+            to="/register"
+            className={styles.registerLink}
+          >
+            Create an account
+          </Link>
+        </p>
+      </motion.section>
+    </main>
   );
 }
 

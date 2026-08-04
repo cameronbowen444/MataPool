@@ -48,6 +48,17 @@ function getErrorMessage(data, fallbackMessage) {
     return data.detail;
   }
 
+  if (data.message) {
+    return data.message;
+  }
+
+  if (
+    Array.isArray(data.non_field_errors) &&
+    data.non_field_errors.length > 0
+  ) {
+    return data.non_field_errors[0];
+  }
+
   const firstValue = Object.values(data)[0];
 
   if (Array.isArray(firstValue)) {
@@ -80,7 +91,10 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  // Regular email/password login or Google login.
+  /*
+   * AUTHENTICATION
+   */
+
   const login = async (credentials) => {
     const endpoint = credentials.googleToken
       ? "/auth/google/"
@@ -103,7 +117,7 @@ export function AuthProvider({ children }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
-      }
+      },
     );
 
     const data = await readResponse(response);
@@ -112,8 +126,8 @@ export function AuthProvider({ children }) {
       throw new Error(
         getErrorMessage(
           data,
-          "Login failed. Please try again."
-        )
+          "Login failed. Please try again.",
+        ),
       );
     }
 
@@ -121,13 +135,20 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem(
       "matapoolUser",
-      JSON.stringify(data.user)
+      JSON.stringify(data.user),
     );
 
     if (data.token) {
       localStorage.setItem(
         "accessToken",
-        data.token
+        data.token,
+      );
+    }
+
+    if (data.refresh) {
+      localStorage.setItem(
+        "refreshToken",
+        data.refresh,
       );
     }
 
@@ -139,7 +160,7 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem(
       "matapoolUser",
-      JSON.stringify(updatedUser)
+      JSON.stringify(updatedUser),
     );
   };
 
@@ -152,6 +173,33 @@ export function AuthProvider({ children }) {
   };
 
   /*
+   * PROFILES
+   */
+
+  const getPublicProfile = async (userId) => {
+    const response = await fetch(
+      `${API_URL}/profiles/${userId}/`,
+      {
+        method: "GET",
+        headers: getAuthHeaders(),
+      },
+    );
+
+    const data = await readResponse(response);
+
+    if (!response.ok) {
+      throw new Error(
+        getErrorMessage(
+          data,
+          "We couldn't load this profile.",
+        ),
+      );
+    }
+
+    return data;
+  };
+
+  /*
    * EVENTS
    */
 
@@ -161,7 +209,7 @@ export function AuthProvider({ children }) {
       {
         method: "GET",
         headers: getAuthHeaders(),
-      }
+      },
     );
 
     const data = await readResponse(response);
@@ -170,12 +218,20 @@ export function AuthProvider({ children }) {
       throw new Error(
         getErrorMessage(
           data,
-          "We couldn't load the events."
-        )
+          "We couldn't load the events.",
+        ),
       );
     }
 
-    return Array.isArray(data) ? data : [];
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    if (Array.isArray(data?.results)) {
+      return data.results;
+    }
+
+    return [];
   };
 
   const getEvent = async (eventId) => {
@@ -184,7 +240,7 @@ export function AuthProvider({ children }) {
       {
         method: "GET",
         headers: getAuthHeaders(),
-      }
+      },
     );
 
     const data = await readResponse(response);
@@ -193,8 +249,8 @@ export function AuthProvider({ children }) {
       throw new Error(
         getErrorMessage(
           data,
-          "We couldn't load this event."
-        )
+          "We couldn't load this event.",
+        ),
       );
     }
 
@@ -213,7 +269,7 @@ export function AuthProvider({ children }) {
         method: "POST",
         headers: getAuthHeaders(),
         body,
-      }
+      },
     );
 
     const data = await readResponse(response);
@@ -222,8 +278,8 @@ export function AuthProvider({ children }) {
       throw new Error(
         getErrorMessage(
           data,
-          "We couldn't create the event."
-        )
+          "We couldn't create the event.",
+        ),
       );
     }
 
@@ -232,7 +288,7 @@ export function AuthProvider({ children }) {
 
   const updateEvent = async (
     eventId,
-    eventData
+    eventData,
   ) => {
     const body =
       eventData instanceof FormData
@@ -245,7 +301,7 @@ export function AuthProvider({ children }) {
         method: "PATCH",
         headers: getAuthHeaders(),
         body,
-      }
+      },
     );
 
     const data = await readResponse(response);
@@ -254,8 +310,8 @@ export function AuthProvider({ children }) {
       throw new Error(
         getErrorMessage(
           data,
-          "We couldn't update the event."
-        )
+          "We couldn't update the event.",
+        ),
       );
     }
 
@@ -268,7 +324,7 @@ export function AuthProvider({ children }) {
       {
         method: "DELETE",
         headers: getAuthHeaders(),
-      }
+      },
     );
 
     const data = await readResponse(response);
@@ -277,8 +333,8 @@ export function AuthProvider({ children }) {
       throw new Error(
         getErrorMessage(
           data,
-          "We couldn't delete the event."
-        )
+          "We couldn't delete the event.",
+        ),
       );
     }
 
@@ -286,14 +342,14 @@ export function AuthProvider({ children }) {
   };
 
   const deleteEventGalleryImage = async (
-    imageId
+    imageId,
   ) => {
     const response = await fetch(
       `${API_URL}/events/gallery/${imageId}/`,
       {
         method: "DELETE",
         headers: getAuthHeaders(),
-      }
+      },
     );
 
     const data = await readResponse(response);
@@ -302,8 +358,8 @@ export function AuthProvider({ children }) {
       throw new Error(
         getErrorMessage(
           data,
-          "We couldn't delete the image."
-        )
+          "We couldn't delete the image.",
+        ),
       );
     }
 
@@ -318,6 +374,8 @@ export function AuthProvider({ children }) {
     login,
     updateUser,
     logout,
+
+    getPublicProfile,
 
     getEvents,
     getEvent,
@@ -337,23 +395,24 @@ export function AuthProvider({ children }) {
 function createEventFormData(eventData) {
   const body = new FormData();
 
-  // Only include fields that actually contain a value.
-  // This context does not make every field required.
   if (eventData.title?.trim()) {
-    body.append("title", eventData.title.trim());
+    body.append(
+      "title",
+      eventData.title.trim(),
+    );
   }
 
   if (eventData.description?.trim()) {
     body.append(
       "description",
-      eventData.description.trim()
+      eventData.description.trim(),
     );
   }
 
   if (eventData.location?.trim()) {
     body.append(
       "location",
-      eventData.location.trim()
+      eventData.location.trim(),
     );
   }
 
@@ -368,7 +427,7 @@ function createEventFormData(eventData) {
   if (eventData.bannerImage) {
     body.append(
       "banner_image",
-      eventData.bannerImage
+      eventData.bannerImage,
     );
   }
 
@@ -387,7 +446,7 @@ export function useAuth() {
 
   if (!context) {
     throw new Error(
-      "useAuth must be used inside AuthProvider"
+      "useAuth must be used inside AuthProvider",
     );
   }
 

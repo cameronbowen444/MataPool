@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaRedo,
+} from "react-icons/fa";
 
 import { useAuth } from "../../context/AuthContext";
 import EventForm from "../EventForm/EventForm";
@@ -14,10 +17,28 @@ function EventEdit() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const loadEvent = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await getEvent(id);
+
+      setEvent(data);
+    } catch (requestError) {
+      setError(
+        requestError?.message ||
+          "We couldn't load this event.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
 
-    async function loadEvent() {
+    async function fetchEvent() {
       try {
         setLoading(true);
         setError("");
@@ -30,8 +51,8 @@ function EventEdit() {
       } catch (requestError) {
         if (!cancelled) {
           setError(
-            requestError.message ||
-              "We couldn't load this event."
+            requestError?.message ||
+              "We couldn't load this event.",
           );
         }
       } finally {
@@ -41,7 +62,7 @@ function EventEdit() {
       }
     }
 
-    loadEvent();
+    fetchEvent();
 
     return () => {
       cancelled = true;
@@ -60,37 +81,60 @@ function EventEdit() {
         </Link>
 
         {loading ? (
-          <div className={styles.statusCard}>
+          <section className={styles.statusCard}>
             <span className={styles.spinner} />
-            <p>Loading event...</p>
-          </div>
+
+            <div>
+              <h1>Loading event</h1>
+              <p>Getting the event information.</p>
+            </div>
+          </section>
         ) : error ? (
-          <div
+          <section
             className={styles.errorCard}
             role="alert"
           >
-            <h1>Unable to edit event</h1>
-            <p>{error}</p>
-          </div>
+            <span className={styles.errorIcon}>!</span>
+
+            <div className={styles.errorContent}>
+              <h1>Unable to edit event</h1>
+              <p>{error}</p>
+
+              <button
+                type="button"
+                onClick={loadEvent}
+                className={styles.retryButton}
+              >
+                <FaRedo aria-hidden="true" />
+                Try Again
+              </button>
+            </div>
+          </section>
         ) : event ? (
           <>
             <header className={styles.header}>
               <p className={styles.eyebrow}>
-                Edit Event
+                MataPool Events
               </p>
 
-              <h1>{event.title}</h1>
+              <h1>Edit Event</h1>
+
+              <p className={styles.eventName}>
+                {event.title}
+              </p>
 
               <p className={styles.description}>
-                Change the event information or add
-                photos.
+                Update the event information, banner, or
+                gallery photos below.
               </p>
             </header>
 
-            <EventForm
-              initialData={event}
-              isEdit
-            />
+            <section className={styles.formCard}>
+              <EventForm
+                initialData={event}
+                isEdit
+              />
+            </section>
           </>
         ) : null}
       </section>

@@ -1,8 +1,4 @@
-import {
-  Navigate,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import Navbar from "./components/Navbar/Navbar";
@@ -16,6 +12,7 @@ import EventsList from "./pages/EventsList/EventsList";
 import EventCreate from "./pages/EventCreate/EventCreate";
 import EventDetail from "./pages/EventDetail/EventDetail";
 import EventEdit from "./pages/EventEdit/EventEdit";
+import PublicProfile from "./pages/PublicProfile/PublicProfile";
 
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
@@ -27,10 +24,7 @@ function App() {
       <Navbar />
 
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate to="/dashboard" replace />}
-        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -88,11 +82,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/profiles/:userId" element={<PublicProfile />} />
 
-        <Route
-          path="*"
-          element={<Navigate to="/login" replace />}
-        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </GoogleOAuthProvider>
   );
