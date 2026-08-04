@@ -319,3 +319,21 @@ git commit -m "Add events page"
 git push -u origin feature-events
 
 # Then create a Pull Request on GitHub
+
+17. ENVIRONMENT VARIABLES SETUP (.env)
+--------------------------------------
+
+Because API keys and sensitive credentials are not pushed to GitHub (they are in .gitignore), you MUST manually create `.env` files in your local workspace after pulling.
+
+Frontend (.env):
+Create a file named `.env` in the `frontend` folder and add the following:
+
+VITE_GOOGLE_CLIENT_ID=7821136417-g3lei84v4p00plv2j33o3bd6rvrjehk5.apps.googleusercontent.com
+VITE_GOOGLE_MAPS_API_KEY=AIzaSyDr7NdrI3BDq72bKobnapk0szNmKDB7PE4
+
+Backend (.env):
+Create a file named `.env` in the `backend` folder and add the following:
+
+GOOGLE_CLIENT_ID=7821136417-g3lei84v4p00plv2j33o3bd6rvrjehk5.apps.googleusercontent.com
+
+**IMPORTANT**: Without these keys configured locally, the Carpool Map View and Google Login features will crash.
