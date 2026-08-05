@@ -69,4 +69,11 @@ urlpatterns = [
         views.event_gallery_image_delete,
         name="event-gallery-delete",
     ),
+
+    # Public profiles
+    path(
+        "profiles/<int:user_id>/",
+        views.public_profile,
+        name="public-profile",
+    ),
 ]

@@ -424,3 +424,40 @@ def carpool_join(request, id):
 def get_matches(request):
     """GET /matches/ - retrieve matches for the current user."""
     pass
+
+# ---------------------------------------------------------------------------
+# Public profile routes
+# ---------------------------------------------------------------------------
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def public_profile(request, user_id):
+    """
+    GET /profiles/<user_id>/ - retrieve another user's
+    existing MataPool profile information.
+    """
+
+    try:
+        profile_user = User.objects.get(
+            id=user_id,
+            is_active=True,
+        )
+    except User.DoesNotExist:
+        return Response(
+            {
+                "error": (
+                    "This MataPool member could not be found."
+                )
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    serializer = UserSerializer(
+        profile_user,
+        context={"request": request},
+    )
+
+    return Response(
+        serializer.data,
+        status=status.HTTP_200_OK,
+    )
