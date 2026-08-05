@@ -195,3 +195,31 @@ class EventSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+
+class PublicProfileSerializer(serializers.ModelSerializer):
+    """Public-facing view of another user's profile.
+
+    Exposes only non-sensitive fields (no email or phone), plus an
+    activity count. `event_count` is the number of events this user has
+    created. Carpool stats (pickups, requests) will be added here once
+    the carpool feature exists.
+    """
+
+    event_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "bio",
+            "profile_picture",
+            "profile_picture_alt",
+            "event_count",
+        ]
+
+    def get_event_count(self, obj):
+        # Event.creator uses related_name="events".
+        return obj.events.count()

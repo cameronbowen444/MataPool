@@ -14,6 +14,7 @@ from .models import Event, EventGalleryImage
 from .serializers import (
     EventSerializer,
     LoginSerializer,
+    PublicProfileSerializer,
     RegisterSerializer,
     UserSerializer,
 )
@@ -357,6 +358,33 @@ def me(request):
     serializer.save()
 
     return Response(serializer.data)
+
+
+# ---------------------------------------------------------------------------
+# Profile routes
+# ---------------------------------------------------------------------------
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def public_profile(request, id):
+    """GET /profiles/<id>/ - another user's public profile and activity stats."""
+    try:
+        user = User.objects.get(id=id)
+    except User.DoesNotExist:
+        return Response(
+            {"error": "Profile not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    serializer = PublicProfileSerializer(
+        user,
+        context={"request": request},
+    )
+
+    return Response(
+        serializer.data,
+        status=status.HTTP_200_OK,
+    )
 
 
 # ---------------------------------------------------------------------------

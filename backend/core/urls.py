@@ -17,6 +17,13 @@ urlpatterns = [
     path("auth/logout/", views.logout, name="logout"),
     path("auth/me/", views.me, name="me"),
 
+    # Profiles
+    path(
+        "profiles/<int:id>/",
+        views.public_profile,
+        name="public-profile",
+    ),
+
     # Carpools
     path(
         "carpools/",
