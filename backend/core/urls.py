@@ -7,19 +7,35 @@ urlpatterns = [
     path("", views.home, name="home"),
 
     # Auth routes
-    path("auth/register/", views.register, name="register"),
-    path("auth/login/", views.login, name="login"),
+    path(
+        "auth/register/",
+        views.register,
+        name="register",
+    ),
+    path(
+        "auth/login/",
+        views.login,
+        name="login",
+    ),
     path(
         "auth/google/",
         views.GoogleAuthView.as_view(),
         name="google-auth",
     ),
-    path("auth/logout/", views.logout, name="logout"),
-    path("auth/me/", views.me, name="me"),
-
-    # Profiles
     path(
-        "profiles/<int:id>/",
+        "auth/logout/",
+        views.logout,
+        name="logout",
+    ),
+    path(
+        "auth/me/",
+        views.me,
+        name="me",
+    ),
+
+    # Public profiles
+    path(
+        "profiles/<int:user_id>/",
         views.public_profile,
         name="public-profile",
     ),
@@ -68,12 +84,5 @@ urlpatterns = [
         "events/gallery/<int:id>/",
         views.event_gallery_image_delete,
         name="event-gallery-delete",
-    ),
-
-    # Public profiles
-    path(
-        "profiles/<int:user_id>/",
-        views.public_profile,
-        name="public-profile",
     ),
 ]

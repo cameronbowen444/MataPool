@@ -5,8 +5,14 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import (
+    api_view,
+    permission_classes,
+)
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -22,7 +28,9 @@ from .serializers import (
 
 User = get_user_model()
 
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_ID = os.environ.get(
+    "GOOGLE_CLIENT_ID"
+)
 
 
 # ---------------------------------------------------------------------------
@@ -33,9 +41,14 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 @permission_classes([AllowAny])
 def home(request):
     """GET / - confirm that the MataPool API is running."""
-    return Response({
-        "message": "Welcome to the MataPool API!"
-    })
+
+    return Response(
+        {
+            "message": (
+                "Welcome to the MataPool API!"
+            )
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -51,7 +64,10 @@ def event_list(request):
     """
 
     if request.method == "GET":
-        events = Event.objects.all().order_by("-created_at")
+        events = Event.objects.all().order_by(
+            "-created_at"
+        )
+
         serializer = EventSerializer(
             events,
             many=True,
@@ -68,28 +84,38 @@ def event_list(request):
         context={"request": request},
     )
 
-    serializer.is_valid(raise_exception=True)
+    serializer.is_valid(
+        raise_exception=True
+    )
 
     event = serializer.save(
         creator=request.user,
     )
 
-    for image in request.FILES.getlist("gallery_images"):
+    gallery_images = request.FILES.getlist(
+        "gallery_images"
+    )
+
+    for image in gallery_images:
         EventGalleryImage.objects.create(
             event=event,
             image=image,
         )
 
+    response_serializer = EventSerializer(
+        event,
+        context={"request": request},
+    )
+
     return Response(
-        EventSerializer(
-            event,
-            context={"request": request},
-        ).data,
+        response_serializer.data,
         status=status.HTTP_201_CREATED,
     )
 
 
-@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@api_view(
+    ["GET", "PUT", "PATCH", "DELETE"]
+)
 @permission_classes([IsAuthenticated])
 def event_detail(request, id):
     """
@@ -102,7 +128,9 @@ def event_detail(request, id):
         event = Event.objects.get(id=id)
     except Event.DoesNotExist:
         return Response(
-            {"error": "Event not found."},
+            {
+                "error": "Event not found."
+            },
             status=status.HTTP_404_NOT_FOUND,
         )
 
@@ -121,7 +149,8 @@ def event_detail(request, id):
         return Response(
             {
                 "error": (
-                    "You do not have permission to modify this event."
+                    "You do not have permission "
+                    "to modify this event."
                 )
             },
             status=status.HTTP_403_FORBIDDEN,
@@ -135,21 +164,35 @@ def event_detail(request, id):
             context={"request": request},
         )
 
-        serializer.is_valid(raise_exception=True)
+        serializer.is_valid(
+            raise_exception=True
+        )
 
         event = serializer.save()
 
-        for image in request.FILES.getlist("gallery_images"):
+        gallery_images = (
+            request.FILES.getlist(
+                "gallery_images"
+            )
+        )
+
+        for image in gallery_images:
             EventGalleryImage.objects.create(
                 event=event,
                 image=image,
             )
 
-        return Response(
+        response_serializer = (
             EventSerializer(
                 event,
-                context={"request": request},
-            ).data,
+                context={
+                    "request": request
+                },
+            )
+        )
+
+        return Response(
+            response_serializer.data,
             status=status.HTTP_200_OK,
         )
 
@@ -162,24 +205,38 @@ def event_detail(request, id):
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def event_gallery_image_delete(request, id):
+def event_gallery_image_delete(
+    request,
+    id,
+):
     """
-    DELETE /events/gallery/<id>/ - delete a specific gallery image.
+    DELETE /events/gallery/<id>/ -
+    delete a specific gallery image.
     """
 
     try:
-        gallery_image = EventGalleryImage.objects.get(id=id)
+        gallery_image = (
+            EventGalleryImage.objects.get(
+                id=id
+            )
+        )
     except EventGalleryImage.DoesNotExist:
         return Response(
-            {"error": "Image not found."},
+            {
+                "error": "Image not found."
+            },
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    if gallery_image.event.creator != request.user:
+    if (
+        gallery_image.event.creator
+        != request.user
+    ):
         return Response(
             {
                 "error": (
-                    "You do not have permission to delete this image."
+                    "You do not have permission "
+                    "to delete this image."
                 )
             },
             status=status.HTTP_403_FORBIDDEN,
@@ -199,16 +256,33 @@ def event_gallery_image_delete(request, id):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def register(request):
-    """POST /auth/register/ - create a new account."""
-    serializer = RegisterSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
+    """
+    POST /auth/register/ -
+    create a new account.
+    """
+
+    serializer = RegisterSerializer(
+        data=request.data
+    )
+
+    serializer.is_valid(
+        raise_exception=True
+    )
 
     user = serializer.save()
-    token, _ = Token.objects.get_or_create(user=user)
+
+    token, _ = Token.objects.get_or_create(
+        user=user
+    )
 
     return Response(
         {
-            "user": UserSerializer(user).data,
+            "user": UserSerializer(
+                user,
+                context={
+                    "request": request
+                },
+            ).data,
             "token": token.key,
         },
         status=status.HTTP_201_CREATED,
@@ -218,16 +292,35 @@ def register(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def login(request):
-    """POST /auth/login/ - log in with email and password."""
-    serializer = LoginSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
+    """
+    POST /auth/login/ -
+    log in with email and password.
+    """
 
-    user = serializer.validated_data["user"]
-    token, _ = Token.objects.get_or_create(user=user)
+    serializer = LoginSerializer(
+        data=request.data
+    )
+
+    serializer.is_valid(
+        raise_exception=True
+    )
+
+    user = serializer.validated_data[
+        "user"
+    ]
+
+    token, _ = Token.objects.get_or_create(
+        user=user
+    )
 
     return Response(
         {
-            "user": UserSerializer(user).data,
+            "user": UserSerializer(
+                user,
+                context={
+                    "request": request
+                },
+            ).data,
             "token": token.key,
         },
         status=status.HTTP_200_OK,
@@ -235,79 +328,150 @@ def login(request):
 
 
 class GoogleAuthView(APIView):
-    """POST /auth/google/ - log in with a CSUN Google account."""
+    """
+    POST /auth/google/ -
+    log in with a CSUN Google account.
+    """
 
     permission_classes = [AllowAny]
 
     def post(self, request):
-        google_token = request.data.get("token")
+        google_token = request.data.get(
+            "token"
+        )
 
         if not google_token:
             return Response(
-                {"error": "Google token is required."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {
+                    "error": (
+                        "Google token is required."
+                    )
+                },
+                status=(
+                    status.HTTP_400_BAD_REQUEST
+                ),
             )
 
         if not GOOGLE_CLIENT_ID:
             return Response(
-                {"error": "Google authentication is not configured."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                {
+                    "error": (
+                        "Google authentication "
+                        "is not configured."
+                    )
+                },
+                status=(
+                    status
+                    .HTTP_500_INTERNAL_SERVER_ERROR
+                ),
             )
 
         try:
-            id_info = id_token.verify_oauth2_token(
-                google_token,
-                requests.Request(),
-                GOOGLE_CLIENT_ID,
+            id_info = (
+                id_token.verify_oauth2_token(
+                    google_token,
+                    requests.Request(),
+                    GOOGLE_CLIENT_ID,
+                )
             )
 
-            email = id_info.get("email", "").strip().lower()
-            hosted_domain = id_info.get("hd", "").strip().lower()
-            email_verified = id_info.get("email_verified", False)
+            email = (
+                id_info
+                .get("email", "")
+                .strip()
+                .lower()
+            )
+
+            hosted_domain = (
+                id_info
+                .get("hd", "")
+                .strip()
+                .lower()
+            )
+
+            email_verified = id_info.get(
+                "email_verified",
+                False,
+            )
 
             if "@" not in email:
                 return Response(
                     {
                         "error": (
-                            "Google account did not provide a valid email."
+                            "Google account did not "
+                            "provide a valid email."
                         )
                     },
-                    status=status.HTTP_400_BAD_REQUEST,
+                    status=(
+                        status
+                        .HTTP_400_BAD_REQUEST
+                    ),
                 )
 
-            _, domain = email.rsplit("@", 1)
+            _, domain = email.rsplit(
+                "@",
+                1,
+            )
 
             if (
                 domain != "my.csun.edu"
-                or hosted_domain != "my.csun.edu"
+                or hosted_domain
+                != "my.csun.edu"
                 or not email_verified
             ):
                 return Response(
                     {
                         "error": (
-                            "Access denied. You must use a verified "
-                            "@my.csun.edu email address."
+                            "Access denied. You must "
+                            "use a verified "
+                            "@my.csun.edu email "
+                            "address."
                         )
                     },
-                    status=status.HTTP_403_FORBIDDEN,
+                    status=(
+                        status.HTTP_403_FORBIDDEN
+                    ),
                 )
 
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    "username": email,
-                    "first_name": id_info.get("given_name", ""),
-                    "last_name": id_info.get("family_name", ""),
-                },
+            user, created = (
+                User.objects.get_or_create(
+                    email=email,
+                    defaults={
+                        "username": email,
+                        "first_name": (
+                            id_info.get(
+                                "given_name",
+                                "",
+                            )
+                        ),
+                        "last_name": (
+                            id_info.get(
+                                "family_name",
+                                "",
+                            )
+                        ),
+                    },
+                )
             )
 
-            token, _ = Token.objects.get_or_create(user=user)
+            token, _ = (
+                Token.objects.get_or_create(
+                    user=user
+                )
+            )
 
             return Response(
                 {
-                    "message": "Google login successful.",
+                    "message": (
+                        "Google login successful."
+                    ),
                     "created": created,
-                    "user": UserSerializer(user).data,
+                    "user": UserSerializer(
+                        user,
+                        context={
+                            "request": request
+                        },
+                    ).data,
                     "token": token.key,
                 },
                 status=status.HTTP_200_OK,
@@ -315,8 +479,15 @@ class GoogleAuthView(APIView):
 
         except ValueError:
             return Response(
-                {"error": "Invalid or expired Google token."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {
+                    "error": (
+                        "Invalid or expired "
+                        "Google token."
+                    )
+                },
+                status=(
+                    status.HTTP_400_BAD_REQUEST
+                ),
             )
 
 
@@ -327,11 +498,19 @@ class GoogleAuthView(APIView):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
-    """POST /auth/logout/ - delete the user's authentication token."""
-    Token.objects.filter(user=request.user).delete()
+    """
+    POST /auth/logout/ -
+    delete the user's authentication token.
+    """
+
+    Token.objects.filter(
+        user=request.user
+    ).delete()
 
     return Response(
-        {"message": "Logged out."},
+        {
+            "message": "Logged out."
+        },
         status=status.HTTP_200_OK,
     )
 
@@ -339,13 +518,20 @@ def logout(request):
 @api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
 def me(request):
-    """GET or PATCH /auth/me/ - retrieve or update the current user."""
+    """
+    GET or PATCH /auth/me/ -
+    retrieve or update the current user.
+    """
+
     if request.method == "GET":
+        serializer = UserSerializer(
+            request.user,
+            context={"request": request},
+        )
+
         return Response(
-            UserSerializer(
-                request.user,
-                context={"request": request},
-            ).data
+            serializer.data,
+            status=status.HTTP_200_OK,
         )
 
     serializer = UserSerializer(
@@ -354,30 +540,51 @@ def me(request):
         partial=True,
         context={"request": request},
     )
-    serializer.is_valid(raise_exception=True)
+
+    serializer.is_valid(
+        raise_exception=True
+    )
+
     serializer.save()
 
-    return Response(serializer.data)
+    return Response(
+        serializer.data,
+        status=status.HTTP_200_OK,
+    )
 
 
 # ---------------------------------------------------------------------------
-# Profile routes
+# Public profile routes
 # ---------------------------------------------------------------------------
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def public_profile(request, id):
-    """GET /profiles/<id>/ - another user's public profile and activity stats."""
+def public_profile(
+    request,
+    user_id,
+):
+    """
+    GET /profiles/<user_id>/ -
+    retrieve another user's public profile.
+    """
+
     try:
-        user = User.objects.get(id=id)
+        profile_user = User.objects.get(
+            id=user_id,
+            is_active=True,
+        )
     except User.DoesNotExist:
         return Response(
-            {"error": "Profile not found."},
+            {
+                "error": (
+                    "Profile not found."
+                )
+            },
             status=status.HTTP_404_NOT_FOUND,
         )
 
     serializer = PublicProfileSerializer(
-        user,
+        profile_user,
         context={"request": request},
     )
 
@@ -394,70 +601,87 @@ def public_profile(request, id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def carpool_list(request):
-    """GET /carpools/ - retrieve all available carpools."""
-    pass
+    """
+    GET /carpools/ -
+    retrieve all available carpools.
+    """
+
+    return Response(
+        [],
+        status=status.HTTP_200_OK,
+    )
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def carpool_create(request):
-    """POST /carpools/create/ - create a new carpool."""
-    pass
+    """
+    POST /carpools/create/ -
+    create a new carpool.
+    """
+
+    return Response(
+        {
+            "message": (
+                "Carpool creation is not "
+                "implemented yet."
+            )
+        },
+        status=status.HTTP_501_NOT_IMPLEMENTED,
+    )
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def carpool_detail(request, id):
-    """GET /carpools/<id>/ - retrieve a specific carpool."""
-    pass
+    """
+    GET /carpools/<id>/ -
+    retrieve a specific carpool.
+    """
+
+    return Response(
+        {
+            "message": (
+                "Carpool details are not "
+                "implemented yet."
+            )
+        },
+        status=status.HTTP_501_NOT_IMPLEMENTED,
+    )
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def carpool_join(request, id):
-    """POST /carpools/<id>/join/ - join an existing carpool."""
-    pass
+    """
+    POST /carpools/<id>/join/ -
+    join an existing carpool.
+    """
 
+    return Response(
+        {
+            "message": (
+                "Joining carpools is not "
+                "implemented yet."
+            )
+        },
+        status=status.HTTP_501_NOT_IMPLEMENTED,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Match routes
+# ---------------------------------------------------------------------------
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_matches(request):
-    """GET /matches/ - retrieve matches for the current user."""
-    pass
-
-# ---------------------------------------------------------------------------
-# Public profile routes
-# ---------------------------------------------------------------------------
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def public_profile(request, user_id):
     """
-    GET /profiles/<user_id>/ - retrieve another user's
-    existing MataPool profile information.
+    GET /matches/ -
+    retrieve matches for the current user.
     """
-
-    try:
-        profile_user = User.objects.get(
-            id=user_id,
-            is_active=True,
-        )
-    except User.DoesNotExist:
-        return Response(
-            {
-                "error": (
-                    "This MataPool member could not be found."
-                )
-            },
-            status=status.HTTP_404_NOT_FOUND,
-        )
-
-    serializer = UserSerializer(
-        profile_user,
-        context={"request": request},
-    )
 
     return Response(
-        serializer.data,
+        [],
         status=status.HTTP_200_OK,
     )
