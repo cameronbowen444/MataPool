@@ -63,8 +63,8 @@ function Navbar() {
                 Events
               </NavLink>
 
-              <NavLink to="/carpools" className={getLinkClass}>
-                Carpools
+              <NavLink to="/carpool" className={getLinkClass}>
+                Carpool
               </NavLink>
 
               <NavLink to="/profile" className={getLinkClass}>

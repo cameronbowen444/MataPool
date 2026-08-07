@@ -1,9 +1,23 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
-
+from django.contrib.auth import get_user_model
 from .models import Event, EventGalleryImage, User
 from .validators import validate_csun_email
 
+User = get_user_model()
+
+class CarpoolUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 
+            'username', 
+            'first_name', 
+            'is_driver', 
+            'latitude', 
+            'longitude', 
+            'profile_picture' 
+        ]
 
 class UserSerializer(serializers.ModelSerializer):
     """Turns a User object into JSON to send back to React.

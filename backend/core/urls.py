@@ -1,11 +1,11 @@
 from django.urls import path
-
+from .views import CarpoolUserListView
 from . import views
 
 
 urlpatterns = [
     path("", views.home, name="home"),
-
+    path('carpool-users/', CarpoolUserListView.as_view(), name='carpool-users'),
     # Auth routes
     path("auth/register/", views.register, name="register"),
     path("auth/login/", views.login, name="login"),

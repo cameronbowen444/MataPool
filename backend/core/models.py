@@ -12,31 +12,27 @@ from django.db import models
 # We only add the fields Django doesn't already provide.
 # ---------------------------------------------------------------------------
 class User(AbstractUser):
-    # AbstractUser has an email field, but it is not unique by default.
-    # We override it so two people can't register with the same address.
-    email = models.EmailField(unique=True)
+   email = models.EmailField(unique=True)
+   phone = models.CharField(max_length=20, blank=True)
+   bio = models.TextField(blank=True, default="")
 
-    # Extra profile info for MataPool. blank=True means "optional in forms".
-    phone = models.CharField(max_length=20, blank=True)
-    bio = models.TextField(blank=True, default="")
-
-    # Profile picture stored as a file under MEDIA_ROOT/profile_pictures/.
-    profile_picture = models.ImageField(
+   profile_picture = models.ImageField(
         upload_to="profile_pictures/",
         blank=True,
         null=True,
     )
-    # Alt text so screen reader users get a description of the image.
-    profile_picture_alt = models.CharField(max_length=255, blank=True, default="")
+   profile_picture_alt = models.CharField(max_length=255, blank=True, default="")
+   is_driver = models.BooleanField(default=False)
+   latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+   longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+   seats_available = models.PositiveIntegerField(default=0, blank=True)
+   
+   created_at = models.DateTimeField(auto_now_add=True)
+   updated_at = models.DateTimeField(auto_now=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        # Controls how a user shows up in the Django admin and in the shell.
+   def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.email})"
-
-
+   
 # ---------------------------------------------------------------------------
 # Event
 # ---------------------------------------------------------------------------

@@ -13,6 +13,8 @@ import EventCreate from "./pages/EventCreate/EventCreate";
 import EventDetail from "./pages/EventDetail/EventDetail";
 import EventEdit from "./pages/EventEdit/EventEdit";
 import PublicProfile from "./pages/PublicProfile/PublicProfile";
+import Carpools from './pages/Carpools/Carpools';
+
 
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
@@ -25,7 +27,6 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -36,6 +37,13 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           }
+        />
+        <Route path="/Carpools" 
+          element={
+            <ProtectedRoute>
+              <Carpools />
+            </ProtectedRoute>
+          } 
         />
 
         <Route

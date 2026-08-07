@@ -9,6 +9,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import generics
+from .serializers import CarpoolUserSerializer
 
 from .models import Event, EventGalleryImage
 from .serializers import (
@@ -19,7 +21,13 @@ from .serializers import (
     UserSerializer,
 )
 
+User = get_user_model()
 
+class CarpoolUserListView(generics.ListAPIView):
+    # This fetches all users who have coordinates set
+    queryset = User.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+    serializer_class = CarpoolUserSerializer
+    
 User = get_user_model()
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
